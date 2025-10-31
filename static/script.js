@@ -50,6 +50,9 @@ function getTimestamp() {
 }
 
 function addMessage(text, type = "system", avatar = "⚡") {
+  if (!text || !text.trim()) {
+    return;
+  }
   var messageDiv = document.createElement("div");
   messageDiv.className = "message " + type;
 
