@@ -1,5 +1,7 @@
 var socket = io();
 var connected = false;
+var hasActiveGame = false;
+var currentGameState = null; // Store game state
 var chatWindow = document.getElementById("chat_window");
 var responseText = document.getElementById("response_text");
 var sendButton = document.getElementById("send_button");
@@ -137,12 +139,31 @@ function updateHeaderStatus(status, cls) {
 }
 
 socket.on("connect", () => {
-  addMessage(
-    "Neural link established. Generating mission parameters...",
-    "system",
-    "⚡"
-  );
-  if (!connected) updateHeaderStatus("Connecting...", "connection_connecting");
+  if (!connected) {
+    addMessage(
+      "Neural link established. Standby...",
+      "system",
+      "⚡"
+    );
+    updateHeaderStatus("Connecting...", "connection_connecting");
+    // New client - tell server we don't have a game
+    socket.emit("client_has_game", { hasGame: false });
+  } else {
+    addMessage("Connection restored.", "system", "✓");
+    updateHeaderStatus("Connected", "connection_connected");
+    updateStatus("Active", "status_active");
+    responseText.disabled = false;
+    sendButton.disabled = false;
+    // Reconnecting client - send game state if we have one
+    if (hasActiveGame && currentGameState) {
+      socket.emit("client_has_game", { 
+        hasGame: true,
+        gameState: currentGameState
+      });
+    } else {
+      socket.emit("client_has_game", { hasGame: false });
+    }
+  }
 });
 
 socket.on("initial_mission", (msg) => {
@@ -162,19 +183,84 @@ socket.on("initial_mission", (msg) => {
   maxTurns.innerText = msg.max_turns;
   updateProgress(1, msg.max_turns);
   updateStatus("Active", "status_active");
-  if (!connected) {
-    updateHeaderStatus("Connected", "connection_connected");
-    connected = true;
-  }
+  updateHeaderStatus("Connected", "connection_connected");
+  connected = true;
+  hasActiveGame = true;
+  
+  // Store game state
+  currentGameState = {
+    persona: msg.persona,
+    technical_goal: msg.technical_goal,
+    personality_trait: msg.personality_trait,
+    turn_count: 0,
+    max_turns: msg.max_turns
+  };
+  
   responseText.disabled = false;
   sendButton.disabled = false;
   responseText.focus();
 });
 
+socket.on("resume_mission", (msg) => {
+  // Don't add any messages - just restore UI state
+  console.log("Resuming mission - restoring UI state only");
+
+  // Parse persona info
+  var personaParts = msg.persona.split("(Personality:");
+  personaInfo.innerText = personaParts[0].trim();
+
+  if (personaParts.length > 1) {
+    personalityInfo.innerText = "🎭 " + personaParts[1].replace(")", "").trim();
+    personalityInfo.style.display = "block";
+  }
+
+  currentTurn.innerText = msg.current_turn;
+  maxTurns.innerText = msg.max_turns;
+  updateProgress(msg.current_turn, msg.max_turns);
+  updateStatus("Active", "status_active");
+  updateHeaderStatus("Connected", "connection_connected");
+  connected = true;
+  hasActiveGame = true;
+  responseText.disabled = false;
+  sendButton.disabled = false;
+  responseText.focus();
+});
+
+socket.on("session_restored", () => {
+  // Server successfully restored session from our game state
+  console.log("Server restored session from client state");
+  updateHeaderStatus("Connected", "connection_connected");
+  updateStatus("Active", "status_active");
+  responseText.disabled = false;
+  sendButton.disabled = false;
+  responseText.focus();
+});
+
+socket.on("server_lost_session", () => {
+  // Server lost our session and can't continue the game
+  console.log("Server lost session - need to refresh");
+  addMessage("⚠️ Server restarted and lost game state", "system", "⚠️");
+  addMessage("Please refresh the page to start a new mission", "system", "🔄");
+  updateStatus("Session Lost", "status_ended");
+  responseText.disabled = true;
+  sendButton.disabled = true;
+  hasActiveGame = false;
+  currentGameState = null;
+});
+
+socket.on("server_requests_new_game", () => {
+  // Server lost our session, needs us to start fresh
+  console.log("Server lost session, starting new game");
+  hasActiveGame = false;
+  currentGameState = null;
+  // Server will send initial_mission next
+});
+
 socket.on("disconnect", () => {
-  connected = false;
-  updateHeaderStatus("Connecting...", "connection_connecting");
+  updateHeaderStatus("Reconnecting...", "connection_connecting");
   updateStatus("Reconnecting...", "status_waiting");
+  responseText.disabled = true;
+  sendButton.disabled = true;
 });
 
 socket.on("new_bot_message", (msg) => {
@@ -186,8 +272,15 @@ socket.on("new_bot_message", (msg) => {
 
   addMessage(msg.message, "bot", "👤");
   currentTurn.innerText = msg.turn;
+  maxTurns.innerText = msg.max_turns;
   updateProgress(msg.turn, msg.max_turns);
   updateStatus("Active", "status_active");
+  
+  // Update stored turn count
+  if (currentGameState) {
+    currentGameState.turn_count = msg.turn - 1;
+  }
+  
   responseText.disabled = false;
   sendButton.disabled = false;
   responseText.focus();
@@ -214,6 +307,8 @@ socket.on("game_over", (msg) => {
     msg.win ? "Success" : "Failed",
     msg.win ? "status_active" : "status_ended"
   );
+  hasActiveGame = false;
+  currentGameState = null;
 });
 
 function sendMessage() {

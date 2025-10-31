@@ -26,8 +26,8 @@ Respond with ONLY the persona description, nothing else. Keep it under 15 words.
 
     try:
         persona_completion = client.chat.completions.create(
-            model="thedrummer/cydonia-24b-v4.1",
-            temperature=1.2,
+            model="x-ai/grok-4-fast",
+            temperature=1.5,
             messages=[{"role": "user", "content": persona_prompt}],
         )
         persona = persona_completion.choices[0].message.content.strip()

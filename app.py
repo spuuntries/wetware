@@ -49,11 +49,84 @@ def game():
 @socketio.on("connect")
 def handle_connect():
     print("client connected!")
+    
+    # Check if there's already an active game in the session
+    if session.get("technical_goal") and session.get("persona_history"):
+        print("resuming existing game session")
+        # Restore existing game state
+        persona_history = session.get("persona_history")
+        first_message = persona_history[1]["content"] if len(persona_history) > 1 else "Welcome back!"
+        persona_info = session.get("persona_info", "Unknown persona")
+        current_turn = session.get("turn_count", 0)
+        
+        emit(
+            "resume_mission",
+            {
+                "persona": persona_info,
+                "first_message": first_message,
+                "current_turn": current_turn + 1,
+                "max_turns": MAX_TURNS,
+            },
+        )
+        return
+    
+    # If no session, wait for client to tell us if they have a game
+    # Don't generate mission yet
+    print("no session found, waiting for client signal")
+
+
+@socketio.on("client_has_game")
+def handle_client_has_game(data):
+    """Client is telling us they have an active game, but we lost the session"""
+    if data.get("hasGame"):
+        game_state = data.get("gameState")
+        if game_state:
+            print("client has game - restoring session from client state")
+            # Restore session from client's game state
+            session["technical_goal"] = game_state.get("technical_goal")
+            session["personality_trait"] = game_state.get("personality_trait")
+            session["turn_count"] = game_state.get("turn_count", 0)
+            session["persona_info"] = game_state.get("persona")
+            
+            # We don't have the full conversation history, but we can create minimal state
+            # The client will continue from where they left off
+            session["persona_history"] = [
+                {
+                    "role": "system",
+                    "content": f"""You are a game character. You are *not* an AI assistant.
+Your persona: {game_state.get("persona")}
+Your technical goal: {game_state.get("technical_goal")}
+Your personality: {game_state.get("personality_trait")}
+
+Your job is to act out this persona and personality *perfectly*.
+The player is an assistant trying to help you.
+DO NOT reveal your technical goal. Just act confused.
+**Based on your personality, you might reject a correct answer if it's not delivered well.**
+(e.g., if you are 'impatient', you hate long answers. if you are 'anxious', you hate technical jargon.)""",
+                }
+            ]
+            session["judge_history"] = []
+            
+            print(f"session restored: turn {session['turn_count']}, goal: {session['technical_goal']}")
+            emit("session_restored")
+        else:
+            print("client has game but no state provided - asking to refresh")
+            emit("server_lost_session")
+    else:
+        # Client doesn't have a game either, generate new one
+        print("client doesn't have game - generating new mission")
+        generate_and_send_mission()
+
+
+def generate_and_send_mission():
+    """Helper function to generate and send a new mission"""
+    print("generating new mission")
     mission = generate_mission(client)
 
     session["technical_goal"] = mission["technical_goal"]
     session["personality_trait"] = mission["personality_trait"]
     session["turn_count"] = 0
+    session["persona_info"] = f"{mission['persona']} (Personality: {mission['personality_trait']})"
 
     agent = PersonaAgent(
         mission["persona"],
@@ -70,7 +143,9 @@ def handle_connect():
     emit(
         "initial_mission",
         {
-            "persona": f"{mission['persona']} (Personality: {mission['personality_trait']})",
+            "persona": session["persona_info"],
+            "technical_goal": mission["technical_goal"],
+            "personality_trait": mission["personality_trait"],
             "first_message": mission["first_message"],
             "max_turns": MAX_TURNS,
         },
@@ -130,7 +205,7 @@ def handle_player_message(data):
 @socketio.on("disconnect")
 def handle_disconnect():
     print("client disconnected.")
-    session.clear()
+    # Don't clear session on disconnect - preserve game state
 
 
 # Run server
