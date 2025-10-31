@@ -51,8 +51,8 @@
         </div>
 
         <div class="menu-actions">
-          <a href="/game" class="menu-button menu-button-primary">
-            <span>Start Mission</span>
+          <a href="/game" class="menu-button menu-button-primary" id="start-button">
+            <span id="button-text">Start Mission</span>
             <div class="button-glow"></div>
           </a>
         </div>
@@ -62,5 +62,26 @@
         </div>
       </div>
     </div>
+
+    <script>
+      // Smooth page transition
+      document.getElementById('start-button').addEventListener('click', function(e) {
+        e.preventDefault();
+        const button = this;
+        const buttonText = document.getElementById('button-text');
+        
+        // Add loading state
+        button.classList.add('loading');
+        buttonText.textContent = 'Initializing...';
+        
+        // Fade out page
+        document.body.classList.add('page-transitioning');
+        
+        // Navigate after animation
+        setTimeout(function() {
+          window.location.href = '/game';
+        }, 400);
+      });
+    </script>
   </body>
 </html>

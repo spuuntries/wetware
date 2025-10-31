@@ -86,6 +86,20 @@ body::before {
   }
 }
 
+/* Page Transition */
+body.page-transitioning {
+  animation: fadeOut 0.4s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* Menu Page Styles */
 .menu-page {
   overflow: auto;
@@ -250,6 +264,11 @@ body::before {
 
 .menu-button-primary:active {
   transform: translateY(-1px);
+}
+
+.menu-button-primary.loading {
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 .button-glow {
