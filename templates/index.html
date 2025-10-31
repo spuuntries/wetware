@@ -29,9 +29,12 @@
       <div
         style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0"
       >
-        <div class="connection-status">
-          <div class="status-dot"></div>
-          <span>CONNECTED</span>
+        <div
+          class="connection-status connection_connecting"
+          id="connection_status"
+        >
+          <div class="status-dot" id="connection_status_dot"></div>
+          <span id="connection_status_text">Connecting...</span>
         </div>
         <div class="mobile-menu-toggle" id="mobile_menu_toggle">
           <div class="hamburger">

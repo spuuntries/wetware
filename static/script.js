@@ -1,4 +1,5 @@
 var socket = io();
+var connected = false;
 var chatWindow = document.getElementById("chat_window");
 var responseText = document.getElementById("response_text");
 var sendButton = document.getElementById("send_button");
@@ -50,7 +51,7 @@ function getTimestamp() {
 }
 
 function addMessage(text, type = "system", avatar = "⚡") {
-  if (!text || !text.trim()) {
+  if (!text || !text.trim() || !text.length) {
     return;
   }
   var messageDiv = document.createElement("div");
@@ -128,13 +129,20 @@ function celebrateWin() {
   }, 250);
 }
 
+function updateHeaderStatus(status, cls) {
+  var headerStatus = document.getElementById("connection_status");
+  var headerStatusText = document.getElementById("connection_status_text");
+  headerStatus.className = "connection-status " + cls;
+  headerStatusText.innerText = status;
+}
+
 socket.on("connect", () => {
   addMessage(
     "Neural link established. Generating mission parameters...",
     "system",
     "⚡"
   );
-  updateStatus("Connecting...", "status_waiting");
+  if (!connected) updateHeaderStatus("Connecting...", "connection_connecting");
 });
 
 socket.on("initial_mission", (msg) => {
@@ -154,9 +162,19 @@ socket.on("initial_mission", (msg) => {
   maxTurns.innerText = msg.max_turns;
   updateProgress(1, msg.max_turns);
   updateStatus("Active", "status_active");
+  if (!connected) {
+    updateHeaderStatus("Connected", "connection_connected");
+    connected = true;
+  }
   responseText.disabled = false;
   sendButton.disabled = false;
   responseText.focus();
+});
+
+socket.on("disconnect", () => {
+  connected = false;
+  updateHeaderStatus("Connecting...", "connection_connecting");
+  updateStatus("Reconnecting...", "status_waiting");
 });
 
 socket.on("new_bot_message", (msg) => {
@@ -179,7 +197,7 @@ socket.on("game_over", (msg) => {
   // Remove typing indicator if exists
   var typingIndicator = chatWindow.querySelector(".typing-indicator");
   if (typingIndicator) {
-    typingIndicator.parentElement.remove();
+    typingIndicator.parentElement.parentElement.remove();
   }
 
   if (msg.win) {
