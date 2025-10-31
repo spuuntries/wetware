@@ -252,6 +252,7 @@ header {
 
 .sidebar-overlay.active {
   opacity: 1;
+  display: block;
 }
 
 /* Main Container */
