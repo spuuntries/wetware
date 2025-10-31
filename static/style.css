@@ -914,10 +914,6 @@ header {
   #info_panel {
     width: 320px;
   }
-
-  .message {
-    max-width: 85%;
-  }
 }
 @media (max-width: 768px) {
   .mobile-menu-toggle {
