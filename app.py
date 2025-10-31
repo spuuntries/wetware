@@ -38,7 +38,12 @@ judge = JudgeAgent(client)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("menu.html")
+
+
+@app.route("/game")
+def game():
+    return render_template("game.html")
 
 
 @socketio.on("connect")

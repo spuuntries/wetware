@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wetware v0.3 :: neural helpdesk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body class="menu-page">
+    <div class="menu-container">
+      <div class="menu-content">
+        <div class="menu-header">
+          <div class="menu-icon">🧠</div>
+          <h1 class="menu-title">wetware v0.3</h1>
+          <p class="menu-subtitle">neural helpdesk simulation</p>
+        </div>
+
+        <div class="menu-description">
+          <p>
+            Welcome to the neural helpdesk simulation. Your mission: help users
+            solve their technical problems while adapting to their unique
+            personalities.
+          </p>
+        </div>
+
+        <div class="menu-features">
+          <div class="feature-card">
+            <div class="feature-icon">🎭</div>
+            <h3>Dynamic Personas</h3>
+            <p>Each user has a unique personality that affects how they communicate</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Time Pressure</h3>
+            <p>Solve problems within limited turns to succeed</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Adaptive Strategy</h3>
+            <p>Being technically correct isn't enough - match their communication style</p>
+          </div>
+        </div>
+
+        <div class="menu-actions">
+          <a href="/game" class="menu-button menu-button-primary">
+            <span>Start Mission</span>
+            <div class="button-glow"></div>
+          </a>
+        </div>
+
+        <div class="menu-footer">
+          <p>Powered by AI • Built for adaptive communication training</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
