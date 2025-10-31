@@ -29,7 +29,7 @@ DO NOT reveal your technical goal. Just act confused.
         self.history.append({"role": "user", "content": player_message})
         try:
             completion = self.client.chat.completions.create(
-                model="gpt-4o-mini", messages=self.history
+                model="thedrummer/cydonia-24b-v4.1", messages=self.history
             )
             reply = completion.choices[0].message.content
             self.history.append({"role": "assistant", "content": reply})
@@ -48,7 +48,7 @@ DO NOT reveal your technical goal. Just act confused.
         temp_history = self.history + [{"role": "system", "content": final_prompt}]
         try:
             completion = self.client.chat.completions.create(
-                model="gpt-4o-mini", messages=temp_history
+                model="thedrummer/cydonia-24b-v4.1", messages=temp_history
             )
             return completion.choices[0].message.content
         except Exception as e:
@@ -60,8 +60,8 @@ class JudgeAgent:
     def __init__(self, client):
         self.client = client
         self.system_prompt = """
-_You are a strict game referee. Your only job is to determine if the player has won._
-_Respond with ONLY a JSON object: {"solved": true} or {"solved": false}_
+You are a strict game referee. Your only job is to determine if the player has won.
+Respond with ONLY a JSON object: {"solved": true} or {"solved": false}
 """
 
     def check_if_solved(self, chat_history, secret_goal):
@@ -70,7 +70,7 @@ _Respond with ONLY a JSON object: {"solved": true} or {"solved": false}_
         prompt = f"**Secret Goal:**\n{secret_goal}\n\n**Chat History:**\n{history_json}\n\n---\n_Has the player's *last* message solved the goal?_"
         try:
             completion = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
                 messages=[
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": prompt},

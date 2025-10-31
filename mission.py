@@ -1,68 +1,128 @@
 import json
 from openai import OpenAI
 
+
 def generate_mission(client):
     print("[GameMaster] generating a new mission...")
 
-    generator_prompt = """
-You are a **scenario designer** for a realistic helpdesk simulation game.
-Your task is to generate a new "mission" for a player acting as a helpful assistant.
+    # Step 1: Generate a realistic persona first
+    persona_prompt = """Generate a realistic user persona for a chatbot application.
 
-You must invent:
-1.  A **realistic persona** (e.g., "a college student," "a busy parent," "a gamer," "a freelance artist," "an office worker").
-2.  A simple, concrete **technical_goal**.
-3.  A **personality_trait** that creates the *real* difficulty. You **must** choose a personality from one of these distinct categories:
-    * **Impatient/Rude**
-    * **Anxious/Cautious**
-    * **Suspicious/Argumentative**
-    * **Terminally Online/Slang**
-    * **Overly Formal/Pedantic**
-    * **Extremely Vague/Scatterbrained**
-4.  The **first_message** the persona sends, which *strongly* reflects both their goal and their personality.
+This should be a brief, natural description of a real person who might converse with a chatbot.
+
+Examples:
+- "a college student working on an assignment"
+- "a busy parent trying to fix something quickly"
+- "a freelance graphic designer"
+- "an office worker dealing with IT issues"
+- "a retiree learning new technology"
+- "a small business owner"
+- "a high school teacher preparing lessons"
+- "a girl having body image issues"
+- "a 15-year-old asking about their grammar"
+- "an infant on their mother's phone"
+
+Respond with ONLY the persona description, nothing else. Keep it under 15 words. No JSON, no extra formatting."""
+
+    try:
+        persona_completion = client.chat.completions.create(
+            model="thedrummer/cydonia-24b-v4.1",
+            temperature=1.2,
+            messages=[{"role": "user", "content": persona_prompt}],
+        )
+        persona = persona_completion.choices[0].message.content.strip()
+        print(f"[GameMaster] generated persona: {persona}")
+    except Exception as e:
+        print(f"!!! error generating persona: {e}")
+        persona = "a busy office worker"
+
+    # Step 2: Generate the mission details based on the persona
+    mission_prompt = f"""You are a scenario designer for a realistic helpdesk simulation game.
+
+You have a user persona: **{persona}**
+
+Now create a mission for this persona. You must invent:
+1. A simple, concrete **technical_goal** (what they want to accomplish)
+2. A **personality_trait** (how they communicate)
+3. The **first_message** they send (strongly reflecting both their goal and personality)
+
+**GOAL CATEGORY EXAMPLES - YOU MAY CREATE YOUR OWN:**
+
+**A) Technical Support**
+- Update drivers, change settings, compress files, connect devices, install software, etc.
+
+**B) Writing/Grammar Help**
+- Fix grammar, improve sentence structure, make text more formal/casual, check spelling, etc.
+
+**C) Code/Programming Help**
+- Debug simple Python/JavaScript code, explain error messages, write basic functions, etc.
+
+**D) General Knowledge/Trivia**
+- Answer questions about history, science, geography, pop culture, etc.
+
+**E) Creative Tasks**
+- Help brainstorm ideas, write short stories, come up with names, create lists, etc.
+
+**F) Math/Calculation Help**
+- Solve equations, calculate percentages, convert units, explain concepts, etc.
 
 **RULES:**
-* **NO FANTASY.** Keep it realistic.
-* **YOUR #1 RULE IS DIVERSITY. YOU MUST RANDOMLY SELECT A *DIFFERENT* CATEGORY FROM THE PERSONALITY LIST FOR EACH GENERATION.**
-* **DO NOT** just pick "Suspicious" or "Anxious" every time. You **must** use "Terminally Online," "Pedantic," and "Vague" just as often.
+* Keep it realistic and appropriate for the persona
+* NO EMOJIS in the first_message
+* VARY the goal categories - don't always do technical support
+* Make the personality trait interesting and challenging
+* DO NOT MAKE IT TOO HARD TO COMPLETE. 
 
 **Format:**
-Respond in a **single JSON object** only.
+Respond with ONLY a JSON object (no code blocks):
 
-**Example 1 (Terminally Online):**
-```json
-{
-  "persona": "a gamer trying to update their drivers.",
-  "technical_goal": "wants to update their graphics card (GPU) drivers.",
-  "personality_trait": "Terminally Online/Slang. Uses gamer/streamer slang.",
-  "first_message": "yo, my frames are *so* chalked rn. i'm getting massive Ls in every match. my buddy said i need to 'update my... thingy?' to get more fps? how do i do that without bricking my whole rig?"
-}
-```
+{{
+  "technical_goal": "wants to...",
+  "personality_trait": "description of how they communicate",
+  "first_message": "their opening message"
+}}
 
-**Example 2 (Scatterbrained):**
-```json
-{
-  "persona": "a student trying to write an essay.",
-  "technical_goal": "wants to change the line spacing in their document (e.g., to double-spaced).",
-  "personality_trait": "Extremely vague and scatterbrained. keeps getting distracted.",
-  "first_message": "hi! ok, so my professor—he has a red car, super weird—he said my essay 'looks wrong.' he wants more 'air' between the... you know... the *words*. the lines. i tried pressing enter but that just makes it... bigger? anyway, what was i asking? oh yeah, help."
-}
-```
+**Example 1:**
+{{
+  "technical_goal": "wants help making their essay introduction sound more academic and less casual",
+  "personality_trait": "Terminally Online/Slang. Uses internet slang constantly",
+  "first_message": "so like- my prof said my intro was 'too casual', lowkey cringe ngl pmo. can u help me make it sound more... idk... smart? here it is: 'So basically, climate change is pretty bad and we should probably do something about it fr fr.' like how do i make that hit different?"
+}}
 
-Now, generate a new, unique mission. **REMEMBER THE DIVERSITY RULE.**
-"""
+**Example 2:**
+{{
+  "technical_goal": "wants to understand why their for loop keeps printing the wrong numbers",
+  "personality_trait": "Extremely vague and scatterbrained. Keeps getting distracted",
+  "first_message": "heyyy so i'm trying to make the computer count to 10 but it's doing... something else? wait, did i feed my cat? anyway, here's my code: 'for i in range(1, 10):' and then... oh, i also need to buy milk. what was i saying? oh yeah, it only goes to 9. why doesn't it go to 10?"
+}}
+
+**Example 3:**
+{{
+  "technical_goal": "wants to know definitively which ocean is the largest by surface area",
+  "personality_trait": "Overly formal and pedantic. Demands precise, academic answers",
+  "first_message": "Good evening. I require your assistance in resolving a factual dispute. My colleague insists that the Atlantic Ocean is the largest ocean by surface area, but I maintain it is the Pacific. However, I need a definitive answer with proper citations and exact measurements, if you please. Approximations will not suffice."
+}}
+
+Now generate the mission for: **{persona}**. DO NOT WRAP IT IN A CODE BLOCK."""
 
     try:
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": generator_prompt}],
+            model="anthropic/claude-haiku-4.5",
+            messages=[{"role": "user", "content": mission_prompt}],
             response_format={"type": "json_object"},
-            temperature=1.2,
         )
         response_json = completion.choices[0].message.content
         mission = json.loads(response_json)
 
+        # Add the persona to the mission
+        mission["persona"] = persona
+
+        # Ensure technical_goal exists (fallback for any legacy field names)
         if "technical_goal" not in mission:
-            mission["technical_goal"] = mission.get("secret_goal", "unknown goal")
+            mission["technical_goal"] = mission.get(
+                "task_goal", mission.get("secret_goal", "unknown goal")
+            )
+
         if "personality_trait" not in mission:
             mission["personality_trait"] = "normal"
 
@@ -72,8 +132,8 @@ Now, generate a new, unique mission. **REMEMBER THE DIVERSITY RULE.**
     except Exception as e:
         print(f"!!! error generating mission: {e}")
         return {
-            "persona": "a busy office worker.",
-            "technical_goal": "wants to 'zip' a folder to email it.",
+            "persona": persona,
+            "technical_goal": "wants to 'zip' a folder to email it",
             "personality_trait": "impatient",
             "first_message": "hi, i need to send this folder, but the email machine says it's 'too big.' how do i make it smaller? and quick, i'm on a deadline.",
         }
