@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>wetware v0.3 :: neural helpdesk</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <div class="header-icon">🧠</div>
+        <div class="header-title-group">
+          <div class="header-title">wetware v0.3</div>
+          <div class="header-subtitle">neural helpdesk simulation</div>
+        </div>
+      </div>
+      <div
+        style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0"
+      >
+        <div class="connection-status">
+          <div class="status-dot"></div>
+          <span>CONNECTED</span>
+        </div>
+        <div class="mobile-menu-toggle" id="mobile_menu_toggle">
+          <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="main_container">
+      <div id="chat_section">
+        <div class="sidebar-overlay" id="sidebar_overlay"></div>
+
+        <div id="chat_window">
+          <div class="message system">
+            <div class="message-avatar">⚡</div>
+            <div class="message-content-wrapper">
+              <div class="message-content">
+                Initializing neural chat link...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="input_box">
+          <div class="input-wrapper">
+            <textarea
+              id="response_text"
+              placeholder="Type your response..."
+              autocomplete="off"
+              disabled
+              rows="1"
+              maxlength="500"
+            ></textarea>
+            <span class="char-counter"><span id="char_count">0</span>/500</span>
+          </div>
+          <button id="send_button" disabled><span>SEND</span></button>
+        </div>
+      </div>
+
+      <div id="info_panel">
+        <div class="info_card">
+          <h2>Mission Status</h2>
+          <div class="turn-counter-wrapper">
+            <div class="circular-progress">
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <defs>
+                  <linearGradient
+                    id="progressGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop
+                      offset="0%"
+                      style="stop-color: #00d9ff; stop-opacity: 1"
+                    />
+                    <stop
+                      offset="100%"
+                      style="stop-color: #a855f7; stop-opacity: 1"
+                    />
+                  </linearGradient>
+                </defs>
+                <circle
+                  class="circular-progress-bg"
+                  cx="70"
+                  cy="70"
+                  r="62"
+                ></circle>
+                <circle
+                  class="circular-progress-bar"
+                  cx="70"
+                  cy="70"
+                  r="62"
+                  stroke-dasharray="389.557"
+                  stroke-dashoffset="389.557"
+                  id="progress_circle"
+                ></circle>
+              </svg>
+              <div class="turn-counter-text">
+                <div class="turn-counter-current" id="current_turn">--</div>
+                <div class="turn-counter-max">
+                  / <span id="max_turns">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="status_badge status_waiting" id="game_status">
+            <div class="status-indicator"></div>
+            <span>Waiting...</span>
+          </div>
+        </div>
+
+        <div class="info_card">
+          <h2>Active Persona</h2>
+          <div class="mission-briefing">
+            <div class="mission-label">Current Mission</div>
+            <div class="mission-text" id="persona_info">
+              Loading mission data...
+            </div>
+          </div>
+          <div
+            class="persona_detail"
+            id="personality_info"
+            style="display: none"
+          >
+            Personality trait will appear here
+          </div>
+        </div>
+
+        <div class="info_card">
+          <h2>Objective</h2>
+          <p class="objective_text">
+            Help the user solve their technical issue while adapting to their
+            unique personality type. Each persona requires a different approach!
+          </p>
+          <div class="tip_box">
+            <div class="tip-icon">💡</div>
+            <div class="tip-text">
+              <strong>Pro tip:</strong> Read their personality carefully. Being
+              technically correct isn't enough – you must communicate in a way
+              they'll accept.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
